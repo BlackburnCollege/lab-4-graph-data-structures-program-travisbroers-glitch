@@ -7,6 +7,7 @@
 int main()
 {
     std::ifstream myFile;
+    std::ifstream myNewFile;
     std::string x;
     std::string y;
     std::string vertex;
@@ -19,12 +20,15 @@ int main()
     std::string loadEdge;
     std::string loadEdge2;
     std::vector<std::string> edgeSearch;
-    std::vector<std::string> secondSearch;
+    std::vector<Point> g1;
+    double newX;
+    double newY;
+    std::vector<Point> g2;
     std::string targetEdge;
     while (oneThroughFour)
     {
         std::cout << " What is it you would like?\n 1. Load Graph File (graph.txt)."
-                     "\n 2. Search For Edge. \n 3. Print Graph. \n 4. Load and Compare 2nd Graph Against 1st graph. \n 5. Exit\n\n";
+            "\n 2. Search For Edge. \n 3. Print Graph. \n 4. Load and Compare 2nd Graph Against 1st graph. \n 5. Exit\n\n";
         std::cin >> choice;
 
         if (choice == '1')
@@ -34,23 +38,21 @@ int main()
             std::cout << "What is the name of the Graph you would like to Load? (reminder to use .txt in the file):";
             std::cin >> loadGraph;
             myFile.open(loadGraph);
-            getline(myFile, vertex, ' ');
-            getline(myFile, edge, '\n');
-            while (getline(myFile, point))
+            while (getline(myFile, point)) 
             {
                 if (point.empty()) continue;
                 std::stringstream ss(point);
-                if (ss >> x >> y) 
-                {
-                    if (edgeSearch.empty()) 
-                    {
-                        edgeSearch.push_back(x);
-                    }
-                    edgeSearch.push_back(y);
-                }
 
+                if (ss >> x >> y) {
+                    edgeSearch.push_back(x);
+                    edgeSearch.push_back(y); 
+                    g1.push_back(stringToPoint(x));
+                    g1.push_back(stringToPoint(y));
+                }
             }
+    
             std::cout << "Your Graph has been Loaded.\n\n";
+            myFile.close();
         }
 
         else if (choice == '2')
@@ -81,17 +83,10 @@ int main()
 
         else if (choice == '3')
         {
-            std::cout << "Number of Vertices: " << vertex << " \nNumber of Edges: " << edge << "\n";
-            std::cout << "Vertices: ";
-            for (int i = 0; i < edgeSearch.size(); i++)
+            std::cout << " Vertices " << vertex << " Edges " << edge << "\n";
+            for (int i = 0; i < (int)edgeSearch.size(); i += 2)
             {
-                std::cout << "(" << edgeSearch[i] << ")" << (i == edgeSearch.size() - 1 ? "" : ", ");
-            }
-            std::cout << "\n";
-
-            for (int i = 0; i < (int)edgeSearch.size() - 1; i++)
-            {
-                std::cout << "Edge " << i + 1 << ": (" << edgeSearch[i] << ") / (" << edgeSearch[i + 1] << ")\n";
+                std::cout << "" << (i / 2) << ": (" << edgeSearch[i] << ") / (" << edgeSearch[i + 1] << ")\n";
             }
             std::cout << "\n\n";
 
@@ -102,47 +97,39 @@ int main()
             std::cout << "What is the name of the Graph you would like to Compare? \n "
                 "(reminder to use .txt in the file and the file you enter\n will be compared to the first one you loaded in previously):";
             std::cin >> G2;
-            myFile.open(G2);
-            getline(myFile, vertex, ' ');
-            getline(myFile, edge, '\n');
-            while (getline(myFile, point))
+            myNewFile.open(G2);
+            while (getline(myNewFile, point))
             {
+                if (point.empty() || point.find(',') == std::string::npos) continue;
                 if (point.empty()) continue;
                 std::stringstream ss(point);
-                if (ss >> x >> y)
+
+                if (ss >> x >> y) 
                 {
-                    if (secondSearch.empty())
-                    {
-                        secondSearch.push_back(x);
-                    }
-                    secondSearch.push_back(y);
+                    g2.push_back(stringToPoint(x));
+                    g2.push_back(stringToPoint(y));
                 }
             }
-            bool doIntersect = false;
-            for (int i = 0; i < (int)edgeSearch.size() - 1; i++) {
+            myNewFile.close(); 
+            bool foundIntersection = false; 
 
-                // ...against every line segment in the second vector
-                for (int j = 0; j < (int)edgeSearch.size() - 1; j++) {
-
-                    Point p1 = edgeSearch[i];     // Start of line 1
-                    Point q1 = edgeSearch[i + 1];   // End of line 1
-
-                    Point p2 = edgeSearch[j];     // Start of line 2
-                    Point q2 = edgeSearch[j + 1];   // End of line 2
-
-                    if (doIntersect(p1, q1, p2, q2)) {
-                        std::cout << "Intersection detected!\n";
+            for (int i = 0; i < (int)g1.size(); i += 2) {
+                for (int j = 0; j < (int)g2.size(); j += 2) {
+                    if (segmentsIntersect(g1[i], g1[i + 1], g2[j], g2[j + 1])) {
+                        foundIntersection = true;
+                        break; 
                     }
                 }
+                if (foundIntersection) break; 
             }
-            if (intersect)
-            {
-                std::cout << "Your Graghs appear to Intersect.\n\n";
+
+            if (foundIntersection) {
+                std::cout << "Intersection Found.\n";
             }
-            else
-            {
-                std::cout << "Your Graghs seem to Not Touch.\n\n";
+            else {
+                std::cout << "Your Graphs do not Touch.\n";
             }
+            
         }
 
         else if (choice == '5')
